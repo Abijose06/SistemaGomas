@@ -16,24 +16,18 @@ namespace Core.Controllers
 
         [HttpPost]
         [Route("registro")]
-        public IHttpActionResult RegistrarUsuario(RegistroRequest request)
+        public IHttpActionResult Registro(RegistroRequest request)
         {
-            if (request == null || string.IsNullOrEmpty(request.Documento))
-                return BadRequest("Datos incompletos.");
-
+            // Usamos una transacción para que si falla crear el cliente, no se quede el usuario "huérfano"
             using (var transaccion = db.Database.BeginTransaction())
             {
                 try
                 {
-                    bool existe = db.Usuarios.Any(u => u.Documento == request.Documento);
-                    if (existe)
-                    {
-                        log.Warn($"Intento de registro duplicado para el documento: {request.Documento}");
-                        return BadRequest("Ya existe un usuario registrado con este documento.");
-                    }
+                    // 1. Hashear la clave usando el nombre correcto del método
+                    string hashGenerado = SeguridadHelper.CalcularHash(request.Password);
 
-                    // 1. Crear el Usuario base
-                    Usuario nuevoUsuario = new Usuario
+                    // 2. Crear el registro en la tabla padre (tblUsuario)
+                    var nuevoUsuario = new Usuario
                     {
                         TipoDocumento = request.TipoDocumento,
                         Documento = request.Documento,
@@ -41,42 +35,48 @@ namespace Core.Controllers
                         Apellidos = request.Apellidos,
                         Telefono = request.Telefono,
                         Correo = request.Correo,
-                        ClaveHash = SeguridadHelper.HashPassword(request.ClaveHash),
                         Rol = request.Rol,
+                        ClaveHash = hashGenerado,
                         Estado = true
                     };
 
                     db.Usuarios.Add(nuevoUsuario);
-                    db.SaveChanges(); // Guarda y genera el IdUsuario
+                    db.SaveChanges(); // Guardamos para que SQL nos devuelva el IdUsuario generado
 
-                    string rol = request.Rol.ToLower();
-
-                    // 2. Inteligencia de Creación de Perfil (Cliente vs Empleado)
-                    if (rol == "cliente" || rol == "clienteweb")
+                    // 3. Crear el registro en la tabla hija correspondiente
+                    if (request.Rol == "Cliente" || request.Rol == "ClienteWeb")
                     {
-                        db.Database.ExecuteSqlCommand("INSERT INTO tblCliente (IdUsuario, Estado) VALUES (@p0, 1)", nuevoUsuario.IdUsuario);
-                        log.Info($"Perfil de Cliente creado para el Usuario ID: {nuevoUsuario.IdUsuario}");
-                    }
-                    else if (rol == "cajero" || rol == "administrador")
-                    {
-                        if (request.Sueldo == null || request.IdSucursal == null)
+                        var nuevoCliente = new Cliente
                         {
-                            throw new Exception("Para registrar un empleado, el Sueldo y el IdSucursal son obligatorios.");
-                        }
-
-                        string sqlEmpleado = "INSERT INTO tblEmpleado (IdUsuario, Sueldo, FechaIngreso, IdSucursal, Estado) VALUES (@p0, @p1, GETDATE(), @p2, 1)";
-                        db.Database.ExecuteSqlCommand(sqlEmpleado, nuevoUsuario.IdUsuario, request.Sueldo, request.IdSucursal);
-                        log.Info($"Perfil de Empleado creado para el Usuario ID: {nuevoUsuario.IdUsuario} en Sucursal {request.IdSucursal}");
+                            IdUsuario = nuevoUsuario.IdUsuario,
+                            Direccion = request.Direccion,
+                            Estado = true
+                        };
+                        db.Clientes.Add(nuevoCliente);
+                    }
+                    else if (request.Rol == "Cajero" || request.Rol == "Administrador")
+                    {
+                        var nuevoEmpleado = new Empleado
+                        {
+                            IdUsuario = nuevoUsuario.IdUsuario,
+                            Sueldo = request.Sueldo ?? 0,
+                            IdSucursal = request.IdSucursal,
+                            FechaIngreso = DateTime.Now,
+                            Estado = true
+                        };
+                        db.Empleados.Add(nuevoEmpleado);
                     }
 
-                    transaccion.Commit();
-                    return Ok(new { Mensaje = "Usuario registrado exitosamente.", IdUsuario = nuevoUsuario.IdUsuario });
+                    db.SaveChanges();
+                    transaccion.Commit(); // ¡Todo perfecto, guardar definitivamente!
+
+                    return Ok(new { Mensaje = "Usuario registrado exitosamente", IdUsuario = nuevoUsuario.IdUsuario });
                 }
                 catch (Exception ex)
                 {
                     transaccion.Rollback();
-                    log.Error("Error crítico al intentar registrar un nuevo usuario.", ex);
-                    return InternalServerError(new Exception("Error al registrar el usuario: " + ex.Message));
+                    log.Error("Fallo al registrar usuario", ex);
+                    return InternalServerError(new Exception("Error crítico al registrar el usuario."));
                 }
             }
         }
@@ -192,11 +192,12 @@ namespace Core.Controllers
         public string Apellidos { get; set; }
         public string Telefono { get; set; }
         public string Correo { get; set; }
-        public string ClaveHash { get; set; }
+        public string Password { get; set; } // Aquí llega el texto plano ("123456")
         public string Rol { get; set; }
 
-        // --- Campos exclusivos para cuando se registra un Empleado ---
-        public decimal? Sueldo { get; set; }
-        public int? IdSucursal { get; set; }
+        // Opcionales dependiendo del rol
+        public string Direccion { get; set; } // Para el cliente
+        public decimal? Sueldo { get; set; }  // Para el empleado
+        public int? IdSucursal { get; set; }  // Para el empleado
     }
 }

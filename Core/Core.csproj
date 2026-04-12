@@ -185,6 +185,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\SeguridadHelper.cs" />
+    <Compile Include="Models\Cliente.cs" />
+    <Compile Include="Models\Empleado.cs" />
     <Compile Include="Models\GomasContext.cs" />
     <Compile Include="Models\Producto.cs" />
     <Compile Include="Models\Usuario.cs" />
