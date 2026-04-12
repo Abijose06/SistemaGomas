@@ -69,6 +69,23 @@ namespace Core.Controllers
             return Ok(resultados);
         }
 
+        [HttpGet]
+        [Route("detalle/{idProducto}")]
+        public IHttpActionResult ObtenerDetalle(int idProducto)
+        {
+            // Solo busca la información básica del producto para la Web
+            var producto = db.Database.SqlQuery<ProductoConStockDTO>(@"
+        SELECT p.IdProducto, p.Marca, p.Modelo, p.Medida, p.PrecioVenta, 
+               ISNULL(SUM(i.StockActual), 0) as StockActual
+        FROM tblProducto p
+        LEFT JOIN tblInventario i ON p.IdProducto = i.IdProducto
+        WHERE p.IdProducto = @p0 AND p.Estado = 1
+        GROUP BY p.IdProducto, p.Marca, p.Modelo, p.Medida, p.PrecioVenta",
+                idProducto).FirstOrDefault();
+
+            if (producto == null) return NotFound();
+            return Ok(producto);
+        }
 
         // Clase auxiliar para devolver el producto + stock
         public class ProductoConStockDTO

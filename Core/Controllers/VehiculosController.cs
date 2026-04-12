@@ -19,7 +19,7 @@ namespace Core.Controllers
         public IHttpActionResult BuscarPorPlaca(string placa)
         {
             var vehiculo = db.Database.SqlQuery<VehiculoDTO>(
-                "SELECT v.* FROM tblVehiculo v WHERE v.Placa = @p0", placa).FirstOrDefault();
+                "SELECT * FROM tblVehiculo WHERE Placa = @p0", placa).FirstOrDefault();
 
             if (vehiculo == null) return NotFound();
             return Ok(vehiculo);
@@ -55,6 +55,18 @@ namespace Core.Controllers
                     return InternalServerError(ex);
                 }
             }
+        }
+
+        [HttpGet]
+        [Route("cliente/{idCliente}")]
+        public IHttpActionResult GetVehiculosPorCliente(int idCliente)
+        {
+            var vehiculos = db.Database.SqlQuery<VehiculoDTO>(@"
+        SELECT v.* FROM tblVehiculo v
+        JOIN tblCliente_Vehiculo cv ON v.IdVehiculo = cv.IdVehiculo
+        WHERE cv.IdCliente = @p0", idCliente).ToList();
+
+            return Ok(vehiculos);
         }
     }
     public class VehiculoDTO

@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Core.Models;
+using System;
+using System.Linq;
 using System.Web.Http;
-using Core.Models;
 
 namespace Core.Controllers
 {
@@ -48,6 +49,31 @@ namespace Core.Controllers
                     return InternalServerError(new Exception("Error al actualizar el inventario."));
                 }
             }
+
+
+        }
+
+        [HttpGet]
+        [Route("movimientos/{idProducto}/{idSucursal}")]
+        public IHttpActionResult GetMovimientos(int idProducto, int idSucursal)
+        {
+            var movimientos = db.Database.SqlQuery<KardexDTO>(@"
+        SELECT Fecha, TipoMovimiento, Cantidad, SaldoInicial, SaldoFinal, Observacion
+        FROM tblKardex_Inventario
+        WHERE IdProducto = @p0 AND IdSucursal = @p1
+        ORDER BY Fecha DESC", idProducto, idSucursal).ToList();
+
+            return Ok(movimientos);
+        }
+
+        public class KardexDTO
+        {
+            public DateTime Fecha { get; set; }
+            public string TipoMovimiento { get; set; } // 'E' o 'S'
+            public int Cantidad { get; set; }
+            public int SaldoInicial { get; set; }
+            public int SaldoFinal { get; set; }
+            public string Observacion { get; set; }
         }
 
         public class EntradaInventarioDTO

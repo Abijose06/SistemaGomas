@@ -178,6 +178,58 @@ namespace Core.Controllers
             }
         }
 
+
+        [HttpGet]
+        [Route("historial/{idCliente}")]
+        public IHttpActionResult HistorialCliente(int idCliente)
+        {
+            var historial = db.Database.SqlQuery<FacturaHistorialDTO>(@"
+        SELECT IdFactura, Fecha, TotalGeneral, EstadoFactura 
+        FROM tblFactura 
+        WHERE IdCliente = @p0 ORDER BY Fecha DESC",
+                idCliente).ToList();
+
+            return Ok(historial);
+        }
+
+        public class FacturaHistorialDTO
+        {
+            public int IdFactura { get; set; }
+            public DateTime Fecha { get; set; }
+            public decimal TotalGeneral { get; set; }
+            public string EstadoFactura { get; set; }
+        }
+
+        [HttpGet]
+        [Route("detalle/{idFactura}")]
+        public IHttpActionResult DetalleFactura(int idFactura)
+        {
+            var detalles = db.Database.SqlQuery<DetalleItemDTO>(@"
+        SELECT d.TipoItem, p.Marca, p.Modelo, s.NombreServicio, d.Cantidad, d.PrecioUnitario, d.SubTotal
+        FROM tblDetalle_Factura d
+        LEFT JOIN tblProducto p ON d.IdProducto = p.IdProducto
+        LEFT JOIN tblServicio s ON d.IdServicio = s.IdServicio
+        WHERE d.IdFactura = @p0",
+                idFactura).ToList();
+
+            return Ok(detalles);
+        }
+
+        [HttpGet]
+        [Route("resumen/{idSucursal}")]
+        public IHttpActionResult ResumenDiario(int idSucursal)
+        {
+            // Obtiene las ventas solo de HOY para la sucursal específica
+            var resumen = db.Database.SqlQuery<FacturaHistorialDTO>(@"
+        SELECT IdFactura, Fecha, TotalGeneral, MetodoPago as EstadoFactura
+        FROM tblFactura 
+        WHERE IdSucursal = @p0 AND CAST(Fecha AS DATE) = CAST(GETDATE() AS DATE) 
+        AND EstadoFactura = 'Activa'",
+                idSucursal).ToList();
+
+            return Ok(resumen);
+        }
+
     }
 
     public class FacturaHistorialDTO
@@ -212,6 +264,17 @@ namespace Core.Controllers
         public string Marca { get; set; }
         public string Modelo { get; set; }
         public string Medida { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
+        public decimal SubTotal { get; set; }
+    }
+
+    public class DetalleItemDTO
+    {
+        public string TipoItem { get; set; }
+        public string Marca { get; set; }
+        public string Modelo { get; set; }
+        public string NombreServicio { get; set; }
         public int Cantidad { get; set; }
         public decimal PrecioUnitario { get; set; }
         public decimal SubTotal { get; set; }
