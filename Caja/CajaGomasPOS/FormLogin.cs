@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using System.Data.SqlClient;
 
 namespace CajaGomasPOS
 {
@@ -10,31 +11,48 @@ namespace CajaGomasPOS
             InitializeComponent();
         }
 
+        // Variable pública para que la Caja sepa quién entró
+        public string RolUsuario = "";
+
         private void btnIngresar_Click(object sender, EventArgs e)
         {
-            // 👉 PARA EL EQUIPO DE INTEGRACIÓN:
-            // Esta validación está quemada para la maqueta. 
-            // Aquí deben consumir el Servicio Web del CORE que valida 
-            // los usuarios y contraseñas reales de la base de datos.
-            // Ejemplo: if (API.LoginUsuario(txtUsuario.Text, txtPassword.Text))
+            // 1. Tu cadena de conexión al archivo .mdf local
+            string conexionBD = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\dewri\\Desktop\\SIstemaGomas\\Caja\\CajaGomasPOS\\App_Data\\GomasDB.mdf;Integrated Security=True";
 
-            if (txtUsuario.Text == "admin" && txtPassword.Text == "1234") // <--- Reemplazar esto
+            using (SqlConnection conexion = new SqlConnection(conexionBD))
             {
-                Form1 pantallaCaja = new Form1();
+                try
+                {
+                    conexion.Open();
 
-                // Le pasamos el fondo de caja que escribió el cajero a la pantalla principal
-                try { pantallaCaja.FondoCaja = Convert.ToDecimal(txtFondo.Text); }
-                catch { pantallaCaja.FondoCaja = 0; }
+                    // 2. Buscamos al usuario por Documento y Clave (Usamos @ para evitar hackeos)
+                    // Según tu tabla: Documento es el ID visual y ClaveHash es la contraseña
+                    string query = "SELECT Rol FROM tblUsuario WHERE Documento = @doc AND ClaveHash = @pass AND Estado = 1";
 
-                pantallaCaja.Show();
-                this.Hide(); // Ocultamos el login
-            }
-            else
-            {
-                // Si el Servicio Web responde que la clave es incorrecta:
-                MessageBox.Show("Usuario o contraseña incorrectos. Intente de nuevo.", "Error de Acceso", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtPassword.Clear();
-                txtUsuario.Focus();
+                    using (SqlCommand cmd = new SqlCommand(query, conexion))
+                    {
+                        cmd.Parameters.AddWithValue("@doc", txtUsuario.Text); // Aquí el usuario pone su Documento
+                        cmd.Parameters.AddWithValue("@pass", txtPassword.Text);
+
+                        object resultado = cmd.ExecuteScalar();
+
+                        if (resultado != null)
+                        {
+                            // 3. Si lo encuentra, guardamos el Rol y cerramos con OK
+                            RolUsuario = resultado.ToString();
+                            this.DialogResult = DialogResult.OK;
+                            this.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Documento o Clave incorrectos.\nO el usuario está inactivo.", "Error de Acceso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error de conexión: " + ex.Message);
+                }
             }
         }
 
@@ -42,5 +60,6 @@ namespace CajaGomasPOS
         {
             // Puedes dejar esto vacío si no necesitas cargar nada al inicio
         }
+
     }
 }

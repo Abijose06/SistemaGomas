@@ -33,8 +33,6 @@
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnIngresar = new System.Windows.Forms.Button();
-            this.label3 = new System.Windows.Forms.Label();
-            this.txtFondo = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
@@ -78,7 +76,7 @@
             this.btnIngresar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnIngresar.ForeColor = System.Drawing.Color.White;
-            this.btnIngresar.Location = new System.Drawing.Point(75, 244);
+            this.btnIngresar.Location = new System.Drawing.Point(75, 184);
             this.btnIngresar.Name = "btnIngresar";
             this.btnIngresar.Size = new System.Drawing.Size(250, 45);
             this.btnIngresar.TabIndex = 4;
@@ -86,30 +84,12 @@
             this.btnIngresar.UseVisualStyleBackColor = false;
             this.btnIngresar.Click += new System.EventHandler(this.btnIngresar_Click);
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(72, 185);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(153, 16);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "Fondo Inicial en Caja ($):";
-            // 
-            // txtFondo
-            // 
-            this.txtFondo.Location = new System.Drawing.Point(75, 204);
-            this.txtFondo.Name = "txtFondo";
-            this.txtFondo.Size = new System.Drawing.Size(150, 22);
-            this.txtFondo.TabIndex = 6;
-            // 
             // FormLogin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(382, 313);
-            this.Controls.Add(this.txtFondo);
-            this.Controls.Add(this.label3);
+            this.ClientSize = new System.Drawing.Size(382, 245);
             this.Controls.Add(this.btnIngresar);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.txtUsuario);
@@ -131,7 +111,5 @@
         private System.Windows.Forms.TextBox txtUsuario;
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Button btnIngresar;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox txtFondo;
     }
 }

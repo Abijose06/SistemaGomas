@@ -26,6 +26,8 @@ namespace CajaGomasPOS
 
         private void FormCobro_Load(object sender, EventArgs e)
         {
+          
+
             lblTotalPagar.Text = TotalPagar.ToString("C");
             cmbMetodoPago.SelectedIndex = 0; // Selecciona "Efectivo" por defecto
         }
