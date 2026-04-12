@@ -10,13 +10,6 @@
 *.sln.docstates
 *.suo
 
-# Bases de datos locales de SQL Server (LocalDB)
-# Ignoramos los MDF y LDF para que cada quien tenga su propia base de datos local y Git no genere conflictos si alguien hace una prueba.
-App_Data/*.mdf
-App_Data/*.ldf
-*.mdf
-*.ldf
-
 # Archivos temporales del sistema operativo
 Thumbs.db
 ehthumbs.db
