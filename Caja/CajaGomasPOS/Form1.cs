@@ -7,19 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.SqlClient;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace CajaGomasPOS
 {
     public partial class Form1 : Form
     {
+        // 🚀 AQUI CONFIGURAS LA RUTA AL CEREBRO (Sustituye por tu puerto real)
+        private string UrlCore = "https://localhost:44376/";
+
         public Form1()
         {
             InitializeComponent();
         }
-
-        // CADENA DE CONEXIÓN REAL AL ARCHIVO MDF
-        string conexionBD = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"C:\\INTEC\\Trimestre 7\\IDS345-02 DESARROLLO DE SOFTWARE III\\SistemaGomas 12-04\\wSIstemaGomas\\Caja\\CajaGomasPOS\\App_Data\\GomasDB.mdf\";Integrated Security=True";
 
         string reciboMetodo = "";
         decimal reciboEfectivo = 0;
@@ -43,25 +44,13 @@ namespace CajaGomasPOS
             public int Stock { get; set; }
         }
 
-        public class FacturaPOS
-        {
-            public string FechaHora { get; set; }
-            public string Cliente { get; set; }
-            public string Vendedor { get; set; }
-            public string MetodoPago { get; set; }
-            public string SubTotal { get; set; }
-            public string ITBIS { get; set; }
-            public string Total { get; set; }
-
-            [Browsable(false)] public int IdCliente { get; set; }
-            [Browsable(false)] public int IdEmpleado { get; set; }
-            [Browsable(false)] public int IdSucursal { get; set; }
-            [Browsable(false)] public decimal ImpuestoBD { get; set; }
-            [Browsable(false)] public string EstadoFactura { get; set; }
-        }
-
-        List<FacturaPOS> historialVentas = new List<FacturaPOS>();
         List<ArticuloPOS> inventario = new List<ArticuloPOS>();
+        // Pon esto justo debajo de public class ArticuloPOS { ... }
+        public class UsuarioCombo
+        {
+            public int Id { get; set; }
+            public string Nombre { get; set; }
+        }
 
         public void ActualizarGaveta()
         {
@@ -69,20 +58,14 @@ namespace CajaGomasPOS
             lblDineroCaja.Text = "Dinero en Gaveta: " + totalEnGaveta.ToString("C");
         }
 
-        private void GuardarVentaOffline()
+        private void GuardarVentaOffline(string jsonRespaldo)
         {
             try
             {
-                string fechaHora = DateTime.Now.ToString("dd/MM/yyyy hh:mm tt");
-                string textoFactura = $"FECHA: {fechaHora}\nTOTAL PAGADO: {lblTotal.Text} (Pago en {reciboMetodo})\nARTÍCULOS VENDIDOS:\n";
-                foreach (DataGridViewRow fila in dgvCarrito.Rows)
-                {
-                    textoFactura += $"  - {fila.Cells[2].Value}x {fila.Cells[1].Value} (${fila.Cells[4].Value})\n";
-                }
-                textoFactura += "--------------------------------------------------\n";
-                System.IO.File.AppendAllText("Backup_VentasOffline.txt", textoFactura);
+                System.IO.File.AppendAllText("Backup_VentasFallidas.json", jsonRespaldo + "\n");
+                MessageBox.Show("Venta guardada en modo OFFLINE. Deberá sincronizarse luego.");
             }
-            catch (Exception ex) { MessageBox.Show("Advertencia: No se pudo guardar el respaldo offline. " + ex.Message); }
+            catch { }
         }
 
         private void CrearMenuSuperior()
@@ -117,7 +100,7 @@ namespace CajaGomasPOS
             if (pantallaLogin.ShowDialog() == DialogResult.OK)
             {
                 estaLogueado = true;
-                if (pantallaLogin.RolUsuario == "Admin")
+                if (pantallaLogin.RolUsuario == "Admin" || pantallaLogin.RolUsuario == "Administrador")
                 {
                     ModoSupervisor = true;
                     menuAdmin.Visible = true;
@@ -156,9 +139,8 @@ namespace CajaGomasPOS
             formFondo.ShowDialog();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
-            // Vinculamos el objeto de impresión con la función que acabamos de crear
             docImprimir.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(docImprimir_PrintPage);
             this.FormClosing += (s, ev) => {
                 if (TotalEfectivoDelDia > 0 && ev.CloseReason != CloseReason.ApplicationExitCall)
@@ -171,9 +153,9 @@ namespace CajaGomasPOS
             CrearMenuSuperior();
             MostrarLogin();
 
-            // CARGA DE DATOS REALES DESDE SQL
-            CargarInventarioDesdeBD();
-            CargarPersonasDesdeBD();
+            // CARGA DE DATOS POR API
+            await CargarPersonasDesdeAPI();
+            await CargarInventarioDesdeAPI();
 
             ActualizarGaveta();
             cmbSucursal.Items.Add("Principal - Santo Domingo");
@@ -184,91 +166,99 @@ namespace CajaGomasPOS
             cmbTipoItem.SelectedIndex = 0;
         }
 
-        private void CargarPersonasDesdeBD()
+        private async Task CargarPersonasDesdeAPI()
         {
-            using (SqlConnection conexion = new SqlConnection(conexionBD))
+            try
             {
-                try
+                using (var client = new HttpClient())
                 {
-                    conexion.Open();
-                    // CLIENTES
-                    string sqlClientes = "SELECT c.IdCliente, u.Nombres + ' ' + u.Apellidos AS Nombre FROM tblCliente c INNER JOIN tblUsuario u ON c.IdUsuario = u.IdUsuario WHERE c.Estado = 1";
-                    SqlDataAdapter daCli = new SqlDataAdapter(sqlClientes, conexion);
-                    DataTable dtCli = new DataTable();
-                    daCli.Fill(dtCli);
-                    cmbCliente.DataSource = dtCli;
-                    cmbCliente.DisplayMember = "Nombre";
-                    cmbCliente.ValueMember = "IdCliente";
+                    client.BaseAddress = new Uri(UrlCore);
 
-                    // EMPLEADOS
-                    string sqlEmpleados = "SELECT e.IdEmpleado, u.Nombres + ' ' + u.Apellidos AS Nombre FROM tblEmpleado e INNER JOIN tblUsuario u ON e.IdUsuario = u.IdUsuario WHERE e.Estado = 1";
-                    SqlDataAdapter daEmp = new SqlDataAdapter(sqlEmpleados, conexion);
-                    DataTable dtEmp = new DataTable();
-                    daEmp.Fill(dtEmp);
-                    cmbEmpleado.DataSource = dtEmp;
-                    cmbEmpleado.DisplayMember = "Nombre";
-                    cmbEmpleado.ValueMember = "IdEmpleado";
+                    // Consumimos Clientes
+                    var resCli = await client.GetAsync("api/usuarios/clientes");
+                    if (resCli.IsSuccessStatusCode)
+                    {
+                        var json = await resCli.Content.ReadAsStringAsync();
+                        // 🛠️ ARREGLO: Deserializamos usando la clase estricta en lugar de dynamic
+                        var listaClientes = JsonConvert.DeserializeObject<List<UsuarioCombo>>(json);
+                        cmbCliente.DataSource = listaClientes;
+                        cmbCliente.DisplayMember = "Nombre";
+                        cmbCliente.ValueMember = "Id";
+                    }
+
+                    // Consumimos Empleados
+                    var resEmp = await client.GetAsync("api/usuarios/empleados");
+                    if (resEmp.IsSuccessStatusCode)
+                    {
+                        var json = await resEmp.Content.ReadAsStringAsync();
+                        // 🛠️ ARREGLO: Deserializamos usando la clase estricta
+                        var listaEmpleados = JsonConvert.DeserializeObject<List<UsuarioCombo>>(json);
+                        cmbEmpleado.DataSource = listaEmpleados;
+                        cmbEmpleado.DisplayMember = "Nombre";
+                        cmbEmpleado.ValueMember = "Id";
+                    }
                 }
-                catch (Exception ex) { MessageBox.Show("Error al cargar Clientes/Empleados: " + ex.Message); }
             }
+            catch (Exception ex) { MessageBox.Show("Error de red al cargar personal: " + ex.Message); }
         }
 
-        private void CargarInventarioDesdeBD()
+        private async Task CargarInventarioDesdeAPI()
         {
             inventario.Clear();
             int idSucursalActual = 1;
-            using (SqlConnection conexion = new SqlConnection(conexionBD))
+
+            try
             {
-                try
+                using (var client = new HttpClient())
                 {
-                    conexion.Open();
-                    string queryProductos = "SELECT p.IdProducto, p.Marca, p.Modelo, p.Medida, p.PrecioVenta, ISNULL(i.StockActual, 0) AS StockActual FROM tblProducto p LEFT JOIN tblInventario i ON p.IdProducto = i.IdProducto AND i.IdSucursal = @IdSucursal WHERE p.Estado = 1";
-                    using (SqlCommand cmd = new SqlCommand(queryProductos, conexion))
+                    client.BaseAddress = new Uri(UrlCore);
+
+                    // 1. Traer los neumáticos del catálogo
+                    var resGomas = await client.GetAsync($"api/productos/catalogo/{idSucursalActual}");
+                    if (resGomas.IsSuccessStatusCode)
                     {
-                        cmd.Parameters.AddWithValue("@IdSucursal", idSucursalActual);
-                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        var jsonGomas = await resGomas.Content.ReadAsStringAsync();
+                        var gomas = JsonConvert.DeserializeObject<List<dynamic>>(jsonGomas);
+                        foreach (var g in gomas)
                         {
-                            while (reader.Read())
+                            inventario.Add(new ArticuloPOS
                             {
-                                inventario.Add(new ArticuloPOS
-                                {
-                                    IdArticulo = Convert.ToInt32(reader["IdProducto"]),
-                                    Tipo = "Goma",
-                                    Marca = reader["Marca"].ToString(),
-                                    Medida = reader["Medida"].ToString(),
-                                    Modelo = reader["Modelo"].ToString(),
-                                    Precio = Convert.ToDecimal(reader["PrecioVenta"]),
-                                    Stock = Convert.ToInt32(reader["StockActual"])
-                                });
-                            }
+                                IdArticulo = (int)g.IdProducto,
+                                Tipo = "Goma",
+                                Marca = (string)g.Marca,
+                                Medida = (string)g.Medida,
+                                Modelo = (string)g.Modelo,
+                                Precio = (decimal)g.PrecioVenta,
+                                Stock = (int)g.StockActual
+                            });
                         }
                     }
-                    string queryServicios = "SELECT IdServicio, NombreServicio, Precio FROM tblServicio WHERE Estado = 1";
-                    using (SqlCommand cmd = new SqlCommand(queryServicios, conexion))
+
+                    // 2. Traer los servicios
+                    var resServ = await client.GetAsync("api/servicios/catalogo");
+                    if (resServ.IsSuccessStatusCode)
                     {
-                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        var jsonServ = await resServ.Content.ReadAsStringAsync();
+                        var servicios = JsonConvert.DeserializeObject<List<dynamic>>(jsonServ);
+                        foreach (var s in servicios)
                         {
-                            while (reader.Read())
+                            inventario.Add(new ArticuloPOS
                             {
-                                inventario.Add(new ArticuloPOS
-                                {
-                                    IdArticulo = Convert.ToInt32(reader["IdServicio"]),
-                                    Tipo = "Servicio",
-                                    Marca = "",
-                                    Medida = "",
-                                    Modelo = reader["NombreServicio"].ToString(),
-                                    Precio = Convert.ToDecimal(reader["Precio"]),
-                                    Stock = 999
-                                });
-                            }
+                                IdArticulo = (int)s.IdServicio,
+                                Tipo = "Servicio",
+                                Marca = "",
+                                Medida = "",
+                                Modelo = (string)s.NombreServicio,
+                                Precio = (decimal)s.Precio,
+                                Stock = 999
+                            });
                         }
                     }
                 }
-                catch (Exception ex) { MessageBox.Show("Error de inventario: " + ex.Message); }
             }
+            catch (Exception ex) { MessageBox.Show("Error de red al cargar inventario: " + ex.Message); }
         }
 
-        // --- LÓGICA DE SELECCIÓN (CASCADA) ---
         private void cmbTipoItem_SelectedIndexChanged(object sender, EventArgs e)
         {
             cmbMarca.Items.Clear(); cmbMedida.Items.Clear(); cmbModelo.Items.Clear();
@@ -324,7 +314,6 @@ namespace CajaGomasPOS
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
-            // Verificación de columnas (Tu escudo anti-error de índice)
             if (dgvCarrito.ColumnCount <= 5)
             {
                 DataGridViewTextBoxColumn colId = new DataGridViewTextBoxColumn();
@@ -333,11 +322,9 @@ namespace CajaGomasPOS
                 dgvCarrito.Columns.Add(colId);
             }
 
-            // --- NUEVO: AVISO SI NO HAY NADA SELECCIONADO ---
             if (cmbModelo.SelectedItem == null)
             {
-                MessageBox.Show("⚠️ Por favor, seleccione un Producto o Servicio antes de intentar agregarlo al carrito.",
-                                "Falta selección", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("⚠️ Seleccione un Producto o Servicio.", "Falta selección", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -407,16 +394,14 @@ namespace CajaGomasPOS
             }
         }
 
-        private void btnFacturar_Click(object sender, EventArgs e)
+        private async void btnFacturar_Click(object sender, EventArgs e)
         {
             if (dgvCarrito.Rows.Count == 0)
             {
-                MessageBox.Show("🛒 El carrito está vacío. Agregue al menos un artículo para poder facturar.",
-                                "Carrito Vacío", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("🛒 El carrito está vacío.", "Carrito Vacío", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            
             decimal subTotal = 0;
             foreach (DataGridViewRow f in dgvCarrito.Rows) subTotal += Convert.ToDecimal(f.Cells[4].Value);
 
@@ -430,116 +415,106 @@ namespace CajaGomasPOS
                 reciboEfectivo = cobro.EfectivoEntregado;
                 reciboDevuelta = cobro.CambioDevuelto;
 
-                using (SqlConnection con = new SqlConnection(conexionBD))
+                var peticionVenta = new
                 {
-                    con.Open();
-                    SqlTransaction trx = con.BeginTransaction();
-                    try
+                    IdCliente = Convert.ToInt32(cmbCliente.SelectedValue),
+                    IdEmpleado = Convert.ToInt32(cmbEmpleado.SelectedValue),
+                    IdSucursal = 1,
+                    IdVehiculo = 1,
+                    MetodoPago = reciboMetodo,
+                    Detalles = new List<object>()
+                };
+
+                foreach (DataGridViewRow f in dgvCarrito.Rows)
+                {
+                    char tipoItem = f.Cells[0].Value.ToString().Contains("Goma") ? 'P' : 'S';
+                    int idArticulo = Convert.ToInt32(f.Cells[5].Value);
+
+                    peticionVenta.Detalles.Add(new
                     {
-                        string sqlF = @"INSERT INTO tblFactura (Impuesto, EstadoFactura, MetodoPago, IdCliente, IdEmpleado, IdSucursal, Estado) 
-                                        VALUES (18, 'PAGADA', @met, @cli, @emp, 1, 1); SELECT SCOPE_IDENTITY();";
-                        int idF = 0;
-                        using (SqlCommand cmdF = new SqlCommand(sqlF, con, trx))
-                        {
-                            cmdF.Parameters.AddWithValue("@met", reciboMetodo);
-                            cmdF.Parameters.AddWithValue("@cli", cmbCliente.SelectedValue);
-                            cmdF.Parameters.AddWithValue("@emp", cmbEmpleado.SelectedValue);
-                            idF = Convert.ToInt32(cmdF.ExecuteScalar());
-                        }
+                        TipoItem = tipoItem.ToString(),
+                        IdProducto = tipoItem == 'P' ? idArticulo : (int?)null,
+                        IdServicio = tipoItem == 'S' ? idArticulo : (int?)null,
+                        Cantidad = Convert.ToInt32(f.Cells[2].Value),
+                        PrecioUnitario = Convert.ToDecimal(f.Cells[3].Value)
+                    });
+                }
 
-                        foreach (DataGridViewRow f in dgvCarrito.Rows)
-                        {
-                            char tipo = f.Cells[0].Value.ToString().Contains("Goma") ? 'P' : 'S';
-                            int idArt = Convert.ToInt32(f.Cells[5].Value);
-                            int cant = Convert.ToInt32(f.Cells[2].Value);
-                            decimal prec = Convert.ToDecimal(f.Cells[3].Value);
+                try
+                {
+                    using (var client = new HttpClient())
+                    {
+                        client.BaseAddress = new Uri(UrlCore);
+                        var content = new StringContent(JsonConvert.SerializeObject(peticionVenta), Encoding.UTF8, "application/json");
 
-                            string sqlD = @"INSERT INTO tblDetalle_Factura (TipoItem, IdServicio, IdProducto, Cantidad, PrecioUnitario, IdFactura, IdVehiculo, Estado)
-                                            VALUES (@t, @s, @p, @c, @pr, @id, 1, 1)";
-                            using (SqlCommand cmdD = new SqlCommand(sqlD, con, trx))
-                            {
-                                cmdD.Parameters.AddWithValue("@t", tipo);
-                                cmdD.Parameters.AddWithValue("@s", tipo == 'S' ? (object)idArt : DBNull.Value);
-                                cmdD.Parameters.AddWithValue("@p", tipo == 'P' ? (object)idArt : DBNull.Value);
-                                cmdD.Parameters.AddWithValue("@c", cant);
-                                cmdD.Parameters.AddWithValue("@pr", prec);
-                                cmdD.Parameters.AddWithValue("@id", idF);
-                                cmdD.ExecuteNonQuery();
-                            }
-                            if (tipo == 'P')
-                            {
-                                string sqlS = "UPDATE tblInventario SET StockActual = StockActual - @c WHERE IdProducto = @p";
-                                using (SqlCommand cmdS = new SqlCommand(sqlS, con, trx))
-                                {
-                                    cmdS.Parameters.AddWithValue("@c", cant);
-                                    cmdS.Parameters.AddWithValue("@p", idArt);
-                                    cmdS.ExecuteNonQuery();
-                                }
-                            }
+                        var response = await client.PostAsync("api/facturacion/procesar", content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            if (reciboMetodo == "Efectivo") { TotalEfectivoDelDia += (reciboEfectivo - reciboDevuelta); ActualizarGaveta(); }
+                            MessageBox.Show("✅ ¡Venta procesada y guardada exitosamente en la base central!");
+
+                            previewImprimir.ShowDialog();
+                            dgvCarrito.Rows.Clear(); RecalcularTotales();
+
+                            await CargarInventarioDesdeAPI();
                         }
-                        trx.Commit();
-                        if (reciboMetodo == "Efectivo") { TotalEfectivoDelDia += (reciboEfectivo - reciboDevuelta); ActualizarGaveta(); }
-                        MessageBox.Show("Venta guardada!");
-                        previewImprimir.ShowDialog();
-                        dgvCarrito.Rows.Clear(); RecalcularTotales();
+                        else
+                        {
+                            string error = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show("❌ El Servidor rechazó la venta:\n" + error, "Error de validación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
-                    catch (Exception ex) { trx.Rollback(); MessageBox.Show("Error: " + ex.Message); }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Fallo de red: No se pudo conectar con el Core central.", "Error Crítico", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    GuardarVentaOffline(JsonConvert.SerializeObject(peticionVenta));
                 }
             }
         }
 
-        private void btnSupervisor_Click(object sender, EventArgs e)
+        private async void btnSupervisor_Click(object sender, EventArgs e)
         {
             Form formReporte = new Form { Text = "PANEL DE CONTROL - MODO SUPERVISOR", Size = new Size(850, 500), StartPosition = FormStartPosition.CenterScreen };
             TabControl tabs = new TabControl { Dock = DockStyle.Fill };
 
-            // --- PESTAÑA 1: INVENTARIO ---
-            TabPage tabInv = new TabPage("📦 Inventario");
+            TabPage tabInv = new TabPage("📦 Inventario Local (Cacheado)");
             DataGridView dgvInv = new DataGridView { Dock = DockStyle.Fill, ReadOnly = true, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
             dgvInv.DataSource = inventario.ToList();
-
-            // Formatear precio en inventario si existe la columna
             if (dgvInv.Columns["Precio"] != null) dgvInv.Columns["Precio"].DefaultCellStyle.Format = "N2";
             tabInv.Controls.Add(dgvInv);
 
-            // --- PESTAÑA 2: VENTAS SQL ---
-            TabPage tabFact = new TabPage("💰 Historial de Ventas");
+            TabPage tabFact = new TabPage("💰 Ventas del Día (En Vivo)");
             DataGridView dgvFact = new DataGridView { Dock = DockStyle.Fill, ReadOnly = true, AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill };
 
-            DataTable dt = new DataTable();
-            using (SqlConnection con = new SqlConnection(conexionBD))
-            {
-                try
-                {
-                    // Traemos los datos. Nota: El SQL a veces trae muchos decimales por el tipo de dato Money o Decimal
-                    string q = "SELECT IdFactura, Fecha, MetodoPago, SubTotal, TotalGeneral FROM tblFactura WHERE Estado = 1 ORDER BY Fecha DESC";
-                    SqlDataAdapter da = new SqlDataAdapter(q, con);
-                    da.Fill(dt);
-                }
-                catch (Exception ex) { MessageBox.Show("Error SQL: " + ex.Message); }
-            }
-
-            dgvFact.DataSource = dt;
-
-            // --- AQUÍ ESTÁ EL ARREGLO PARA LOS DECIMALES ---
-            // Usamos un bucle para formatear CUALQUIER columna que sea numérica
-            foreach (DataGridViewColumn col in dgvFact.Columns)
-            {
-                // Si la columna es SubTotal o TotalGeneral, le forzamos 2 decimales
-                if (col.Name == "SubTotal" || col.Name == "TotalGeneral")
-                {
-                    col.DefaultCellStyle.Format = "N2"; // Esto quita los chorros de ceros
-                }
-            }
-
-            // Calcular el total para el título de la pestaña
             decimal sumaTodo = 0;
-            if (dt.Rows.Count > 0)
+            try
             {
-                sumaTodo = dt.AsEnumerable().Sum(row => Convert.ToDecimal(row["TotalGeneral"]));
-            }
-            tabFact.Text = $"💰 Ventas (Total: {sumaTodo:C2})";
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(UrlCore);
+                    var response = await client.GetAsync("api/facturacion/resumen-diario/1");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
+                        if (json.TrimStart().StartsWith("["))
+                        {
+                            var ventas = JsonConvert.DeserializeObject<List<dynamic>>(json);
+                            dgvFact.DataSource = ventas;
 
+                            foreach (DataGridViewColumn col in dgvFact.Columns)
+                            {
+                                if (col.Name == "TotalGeneral") col.DefaultCellStyle.Format = "N2";
+                            }
+                            foreach (var v in ventas) sumaTodo += Convert.ToDecimal(v.TotalGeneral);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) { MessageBox.Show("Error de red: " + ex.Message); }
+
+            tabFact.Text = $"💰 Ventas (Total: {sumaTodo:C2})";
             tabFact.Controls.Add(dgvFact);
 
             tabs.TabPages.Add(tabInv);
@@ -548,15 +523,8 @@ namespace CajaGomasPOS
             formReporte.ShowDialog();
         }
 
-        // =======================================================================
-        // CIERRE DE CAJA Y CUADRE OBLIGATORIO (Blindado)
-        // =======================================================================
-        // =======================================================================
-        // CIERRE DE CAJA Y CUADRE OBLIGATORIO (MODO SEGURO)
-        // =======================================================================
         private void btnCierreCaja_Click(object sender, EventArgs e)
         {
-            // 1. Si NO hay ventas, le permitimos salir sin cuadrar
             if (TotalEfectivoDelDia == 0)
             {
                 if (MessageBox.Show("No se registraron ventas hoy. ¿Desea salir del sistema?", "Cierre", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
@@ -566,7 +534,6 @@ namespace CajaGomasPOS
                 return;
             }
 
-            // 2. Si SÍ hay ventas, creamos la ventana de Cuadre Obligatorio
             Form formCuadre = new Form() { Width = 380, Height = 350, Text = "Cuadre de Caja Obligatorio", StartPosition = FormStartPosition.CenterScreen, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false };
 
             Label lblInstruccion = new Label() { Left = 20, Top = 20, Text = "⚠️ SE REGISTRARON VENTAS EN EFECTIVO.\nIngrese el monto físico contado en gaveta:", AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold), ForeColor = Color.DarkRed };
@@ -574,8 +541,6 @@ namespace CajaGomasPOS
             Button btnVerificar = new Button() { Text = "Verificar Dinero", Left = 180, Top = 58, Width = 150, Height = 30, Cursor = Cursors.Hand };
 
             Label lblResultado = new Label() { Left = 20, Top = 110, AutoSize = true, Font = new Font("Arial", 10, FontStyle.Bold), Text = "Esperando verificación..." };
-
-            // El botón de salida empieza APAGADO y con color gris
             Button btnCerrarTurno = new Button() { Text = "Confirmar y Salir", Left = 110, Top = 240, Width = 150, Height = 40, Enabled = false, BackColor = Color.LightGray };
 
             btnVerificar.Click += (s, ev) =>
@@ -588,27 +553,21 @@ namespace CajaGomasPOS
 
                     if (diferencia == 0)
                     {
-                        // --- CASO 1: CUADRE PERFECTO ---
                         lblResultado.ForeColor = Color.DarkGreen;
                         lblResultado.Text = $"Efectivo Esperado: {totalEsperado:C}\nFísico Contado: {efectivoContado:C}\n\n✅ CUADRE PERFECTO.\nYa puede cerrar el sistema.";
-
-                        btnCerrarTurno.Enabled = true; // SE ACTIVA EL BOTÓN
-                        btnCerrarTurno.BackColor = Color.LimeGreen; // Color de éxito
-                        txtContado.ReadOnly = true; // Bloqueamos el campo para que no lo altere
+                        btnCerrarTurno.Enabled = true;
+                        btnCerrarTurno.BackColor = Color.LimeGreen;
+                        txtContado.ReadOnly = true;
                         btnVerificar.Enabled = false;
                     }
                     else
                     {
-                        // --- CASO 2: HAY DIFERENCIA (SOBRANTE O FALTANTE) ---
                         string mensajeDiferencia = diferencia > 0 ? $"SOBRANTE: {diferencia:C}" : $"FALTANTE: {Math.Abs(diferencia):C}";
-
                         lblResultado.ForeColor = Color.Crimson;
                         lblResultado.Text = $"Efectivo Esperado: {totalEsperado:C}\nFísico Contado: {efectivoContado:C}\n\n❌ {mensajeDiferencia}\n\nERROR: El dinero no coincide.\nNo se permite el cierre hasta cuadrar.";
-
-                        btnCerrarTurno.Enabled = false; // SE MANTIENE BLOQUEADO
+                        btnCerrarTurno.Enabled = false;
                         btnCerrarTurno.BackColor = Color.LightGray;
-                        txtContado.Focus();
-                        txtContado.SelectAll();
+                        txtContado.Focus(); txtContado.SelectAll();
                     }
                 }
                 catch { MessageBox.Show("Por favor, ingrese un monto numérico válido.", "Error de formato"); }
@@ -620,21 +579,12 @@ namespace CajaGomasPOS
                 Application.Exit();
             };
 
-            // Agregamos controles al mini-formulario
-            formCuadre.Controls.Add(lblInstruccion);
-            formCuadre.Controls.Add(txtContado);
-            formCuadre.Controls.Add(btnVerificar);
-            formCuadre.Controls.Add(lblResultado);
-            formCuadre.Controls.Add(btnCerrarTurno);
-
+            formCuadre.Controls.Add(lblInstruccion); formCuadre.Controls.Add(txtContado); formCuadre.Controls.Add(btnVerificar); formCuadre.Controls.Add(lblResultado); formCuadre.Controls.Add(btnCerrarTurno);
             formCuadre.ShowDialog();
         }
-        // =======================================================================
-        // GENERADOR DE TICKET DE VENTA (DISEÑO PROFESIONAL PARA IMPRESORA TÉRMICA)
-        // =======================================================================
+
         private void docImprimir_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
         {
-            // 1. Herramientas de dibujo
             Graphics gfx = e.Graphics;
             Font fontTitulo = new Font("Courier New", 14, FontStyle.Bold);
             Font fontNormal = new Font("Courier New", 10);
@@ -643,50 +593,36 @@ namespace CajaGomasPOS
             StringFormat formatoCentro = new StringFormat { Alignment = StringAlignment.Center };
             StringFormat formatoDerecha = new StringFormat { Alignment = StringAlignment.Far };
 
-            int y = 20; // Margen superior
-            int ancho = 300; // Ancho estándar de papel térmico (80mm)
+            int y = 20;
+            int ancho = 300;
             string separador = "--------------------------------------";
 
-            // 2. Encabezado del Taller
-            gfx.DrawString("PRECISION TIRE POS", fontTitulo, Brushes.Black, new RectangleF(0, y, ancho, 25), formatoCentro);
-            y += 25;
-            gfx.DrawString("Servicios y Gomas de Calidad", fontNormal, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro);
-            y += 20;
+            gfx.DrawString("PRECISION TIRE POS", fontTitulo, Brushes.Black, new RectangleF(0, y, ancho, 25), formatoCentro); y += 25;
+            gfx.DrawString("Servicios y Gomas de Calidad", fontNormal, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro); y += 20;
             gfx.DrawString(separador, fontNormal, Brushes.Black, 0, y); y += 15;
 
-            // 3. Info de la Factura
             gfx.DrawString($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}", fontNormal, Brushes.Black, 10, y); y += 15;
             gfx.DrawString($"Cajero: {cmbEmpleado.Text}", fontNormal, Brushes.Black, 10, y); y += 15;
             gfx.DrawString($"Cliente: {cmbCliente.Text}", fontNormal, Brushes.Black, 10, y); y += 15;
             gfx.DrawString(separador, fontNormal, Brushes.Black, 0, y); y += 20;
 
-            // 4. Cabecera de tabla
             gfx.DrawString("CANT  DESCRIPCION", fontBold, Brushes.Black, 10, y);
-            gfx.DrawString("TOTAL", fontBold, Brushes.Black, new RectangleF(0, y, ancho - 10, 20), formatoDerecha);
-            y += 20;
+            gfx.DrawString("TOTAL", fontBold, Brushes.Black, new RectangleF(0, y, ancho - 10, 20), formatoDerecha); y += 20;
 
-            // 5. Detalles del Carrito (VERSIÓN CORREGIDA)
             foreach (DataGridViewRow fila in dgvCarrito.Rows)
             {
                 string cant = fila.Cells[2].Value.ToString();
                 string desc = fila.Cells[1].Value.ToString();
                 decimal totalLinea = Convert.ToDecimal(fila.Cells[4].Value);
 
-                // Ajustamos el largo máximo de la descripción para que no choque con el precio
-                // Bajamos de 20 a 16 caracteres para dejar aire al símbolo de $
                 if (desc.Length > 16) desc = desc.Substring(0, 14) + "..";
 
-                // Dibujamos la cantidad y la descripción con un poco más de margen a la izquierda
                 gfx.DrawString($"{cant}x", fontNormal, Brushes.Black, 5, y);
-                gfx.DrawString(desc, fontNormal, Brushes.Black, 45, y); // Movimos la descripción a la posición 45
-
-                // Dibujamos el precio alineado a la derecha
+                gfx.DrawString(desc, fontNormal, Brushes.Black, 45, y);
                 gfx.DrawString(totalLinea.ToString("C2"), fontNormal, Brushes.Black, new RectangleF(0, y, ancho - 5, 20), formatoDerecha);
-
                 y += 20;
             }
 
-            // 6. Totales
             gfx.DrawString(separador, fontNormal, Brushes.Black, 0, y); y += 15;
 
             gfx.DrawString("SUBTOTAL:", fontNormal, Brushes.Black, 100, y);
@@ -698,9 +634,7 @@ namespace CajaGomasPOS
             gfx.DrawString("TOTAL:", fontBold, Brushes.Black, 100, y);
             gfx.DrawString(lblTotal.Text, fontBold, Brushes.Black, new RectangleF(0, y, ancho - 10, 20), formatoDerecha); y += 30;
 
-            // 7. Pie de página
-            gfx.DrawString("¡Gracias por su preferencia!", fontBold, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro);
-            y += 20;
+            gfx.DrawString("¡Gracias por su preferencia!", fontBold, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro); y += 20;
             gfx.DrawString("Conserve su recibo para garantía", fontNormal, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro);
         }
     }

@@ -125,6 +125,7 @@ namespace Core.Controllers
 
         // Clase auxiliar para el query de empleado
         private class EmpleadoLoginDTO { public int IdEmpleado { get; set; } public int IdSucursal { get; set; } }
+
         // Ruta: GET api/usuarios/buscar/{documento}
         [HttpGet]
         [Route("buscar/{documento}")]
@@ -155,6 +156,27 @@ namespace Core.Controllers
             }
         }
 
+        // =========================================================
+        // NUEVOS MÉTODOS AÑADIDOS PARA ALIMENTAR LA CAJA
+        // =========================================================
+        [HttpGet]
+        [Route("clientes")]
+        public IHttpActionResult GetClientes()
+        {
+            var clientes = db.Database.SqlQuery<UsuarioComboDTO>(
+                "SELECT c.IdCliente as Id, u.Nombres + ' ' + u.Apellidos AS Nombre FROM tblCliente c INNER JOIN tblUsuario u ON c.IdUsuario = u.IdUsuario WHERE c.Estado = 1").ToList();
+            return Ok(clientes);
+        }
+
+        [HttpGet]
+        [Route("empleados")]
+        public IHttpActionResult GetEmpleados()
+        {
+            var empleados = db.Database.SqlQuery<UsuarioComboDTO>(
+                "SELECT e.IdEmpleado as Id, u.Nombres + ' ' + u.Apellidos AS Nombre FROM tblEmpleado e INNER JOIN tblUsuario u ON e.IdUsuario = u.IdUsuario WHERE e.Estado = 1").ToList();
+            return Ok(empleados);
+        }
+        // =========================================================
 
         protected override void Dispose(bool disposing)
         {
@@ -178,11 +200,22 @@ namespace Core.Controllers
         public string Documento { get; set; }
         public string Telefono { get; set; }
     }
+
     public class DatosEmpleadoDTO
     {
         public int IdEmpleado { get; set; }
         public int? IdSucursal { get; set; }
     }
+
+    // =========================================================
+    // NUEVA CLASE AÑADIDA PARA LOS COMBOBOX DE LA CAJA
+    // =========================================================
+    public class UsuarioComboDTO
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+    }
+    // =========================================================
 
     public class RegistroRequest
     {

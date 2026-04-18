@@ -1,17 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.UI;
-using System.Web.UI.WebControls;
+using Newtonsoft.Json;
 
 namespace WebGomas
 {
     public partial class _Default : Page
     {
-        protected void Page_Load(object sender, EventArgs e)
-        {
+        
+        private string UrlCore = "https://localhost:44376/";
 
+        protected async void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                await CargarCatalogoWeb();
+            }
+        }
+
+        private async Task CargarCatalogoWeb()
+        {
+            try
+            {
+                // Ignorar advertencias de certificados locales
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(UrlCore);
+
+                    // Conexión silenciosa al Core para acceder a la base de datos
+                    var response = await client.GetAsync("api/productos/catalogo/1");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonString = await response.Content.ReadAsStringAsync();
+
+                        // Los datos se descargan y se quedan listos en memoria
+                        // sin alterar el diseño HTML original
+                        var productos = JsonConvert.DeserializeObject<List<ProductoWebDTO>>(jsonString);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Error capturado en silencio para no romper la página
+            }
+        }
+
+        public class ProductoWebDTO
+        {
+            public string Marca { get; set; }
+            public string Modelo { get; set; }
+            public string Medida { get; set; }
+            public decimal PrecioVenta { get; set; }
+            public int StockActual { get; set; }
         }
     }
 }

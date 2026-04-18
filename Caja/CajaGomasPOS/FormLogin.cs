@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Windows.Forms;
-using System.Data.SqlClient;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace CajaGomasPOS
 {
@@ -11,55 +14,59 @@ namespace CajaGomasPOS
             InitializeComponent();
         }
 
-        // Variable pública para que la Caja sepa quién entró
+        // Variable pública intacta para que la Caja sepa quién entró
         public string RolUsuario = "";
 
-        private void btnIngresar_Click(object sender, EventArgs e)
+        private async void btnIngresar_Click(object sender, EventArgs e)
         {
-            // 1. Tu cadena de conexión al archivo .mdf local
-            string conexionBD = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\dewri\\Desktop\\SIstemaGomas\\Caja\\CajaGomasPOS\\App_Data\\GomasDB.mdf;Integrated Security=True";
+            // 1. Armamos el paquete EXACTAMENTE como lo pide la clase LoginRequest de tu compañero
+            var peticionLogin = new
+            {
+                TipoDocumento = 1, // Asumimos 1 por defecto (ej. Cédula)
+                Documento = txtUsuario.Text,
+                Password = txtPassword.Text
+            };
 
-            using (SqlConnection conexion = new SqlConnection(conexionBD))
+            using (var client = new HttpClient())
             {
                 try
                 {
-                    conexion.Open();
+                    // IMPORTANTE: Cambia "tu-puerto" por el puerto de tu Core
+                    client.BaseAddress = new Uri("https://localhost:44376/"); // Usa el número real de tu PC
 
-                    // 2. Buscamos al usuario por Documento y Clave (Usamos @ para evitar hackeos)
-                    // Según tu tabla: Documento es el ID visual y ClaveHash es la contraseña
-                    string query = "SELECT Rol FROM tblUsuario WHERE Documento = @doc AND ClaveHash = @pass AND Estado = 1";
+                    var content = new StringContent(JsonConvert.SerializeObject(peticionLogin), Encoding.UTF8, "application/json");
 
-                    using (SqlCommand cmd = new SqlCommand(query, conexion))
+                    // 2. Apuntamos a la ruta real que ya programó tu compañero
+                    var response = await client.PostAsync("api/usuarios/login", content);
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        cmd.Parameters.AddWithValue("@doc", txtUsuario.Text); // Aquí el usuario pone su Documento
-                        cmd.Parameters.AddWithValue("@pass", txtPassword.Text);
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        dynamic datosUsuario = JsonConvert.DeserializeObject(jsonString);
 
-                        object resultado = cmd.ExecuteScalar();
+                        // 3. Leemos el Rol y el NombreCompleto tal como los devuelve su API
+                        RolUsuario = datosUsuario.Rol;
+                        string nombreAtendido = datosUsuario.NombreCompleto;
 
-                        if (resultado != null)
-                        {
-                            // 3. Si lo encuentra, guardamos el Rol y cerramos con OK
-                            RolUsuario = resultado.ToString();
-                            this.DialogResult = DialogResult.OK;
-                            this.Close();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Documento o Clave incorrectos.\nO el usuario está inactivo.", "Error de Acceso", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+                        MessageBox.Show("Bienvenido al sistema, " + nombreAtendido, "Acceso Concedido", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Documento o Clave incorrectos.\nO el usuario está inactivo en la base central.", "Error de Acceso", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error de conexión: " + ex.Message);
+                    MessageBox.Show("Error de conexión con el Servidor Core: " + ex.Message, "Fallo de Red", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void FormLogin_Load(object sender, EventArgs e)
         {
-            // Puedes dejar esto vacío si no necesitas cargar nada al inicio
         }
-
     }
 }
