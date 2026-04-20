@@ -11,7 +11,7 @@ namespace Core.Handlers
         public async Task Handle(ProcesarPedidoCommand message, IMessageHandlerContext context)
         {
             // 1. Preparamos la conexión a la base de datos
-            string connectionString = @"Server=(localdb)\MSSQLLocalDB;Database=GomasDB;Trusted_Connection=True;";
+            string connectionString = ConfigurationManager.ConnectionStrings["GomasContext"].ConnectionString;
 
             using (SqlConnection con = new SqlConnection(connectionString))
             {
@@ -48,16 +48,6 @@ namespace Core.Handlers
                     }
                 }
             }
-
-            // 4. Silenciamos la publicación del evento para que la Caja no abra la ventana emergente
-            // con las compras que vienen desde la página web.
-
-            // var evento = new PedidoCompletadoEvent
-            // {
-            //     TotalFacturado = message.Total,
-            //     Articulos = message.Articulos
-            // };
-            // await context.Publish(evento);
         }
     }
 }

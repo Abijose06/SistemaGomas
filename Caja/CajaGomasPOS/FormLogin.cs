@@ -1,9 +1,10 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using Newtonsoft.Json;
+using System;
+using System.Configuration;
 using System.Net.Http;
 using System.Text;
-using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CajaGomasPOS
 {
@@ -16,6 +17,8 @@ namespace CajaGomasPOS
 
         // Variable pública intacta para que la Caja sepa quién entró
         public string RolUsuario = "";
+        private string UrlIntegracion = ConfigurationManager.AppSettings["UrlIntegracion"];
+
 
         private async void btnIngresar_Click(object sender, EventArgs e)
         {
@@ -32,8 +35,7 @@ namespace CajaGomasPOS
                 try
                 {
                     // IMPORTANTE: Cambia "tu-puerto" por el puerto de tu Core
-                    client.BaseAddress = new Uri("https://localhost:44376/"); // Usa el número real de tu PC
-
+                    client.BaseAddress = new Uri(UrlIntegracion);
                     var content = new StringContent(JsonConvert.SerializeObject(peticionLogin), Encoding.UTF8, "application/json");
 
                     // 2. Apuntamos a la ruta real que ya programó tu compañero

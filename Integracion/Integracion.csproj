@@ -172,8 +172,15 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Controllers\CajaController.cs" />
+    <Compile Include="Controllers\FacturacionController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="Controllers\InventarioController.cs" />
+    <Compile Include="Controllers\ProductosController.cs" />
+    <Compile Include="Controllers\ServiciosController.cs" />
+    <Compile Include="Controllers\SucursalesController.cs" />
+    <Compile Include="Controllers\UsuariosController.cs" />
+    <Compile Include="Controllers\VehiculosController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -248,6 +255,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Models\" />
+    <Folder Include="Views\Caja\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\bootstrap.min.js.map" />

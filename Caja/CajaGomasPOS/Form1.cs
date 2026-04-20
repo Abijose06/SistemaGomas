@@ -9,14 +9,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Configuration;
 
 namespace CajaGomasPOS
 {
     public partial class Form1 : Form
     {
-        // 🚀 AQUI CONFIGURAS LA RUTA AL CEREBRO (Sustituye por tu puerto real)
-        private string UrlCore = "https://localhost:44376/";
-
+        private string UrlIntegracion = ConfigurationManager.AppSettings["UrlIntegracion"];
         public Form1()
         {
             InitializeComponent();
@@ -172,7 +171,7 @@ namespace CajaGomasPOS
             {
                 using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri(UrlCore);
+                    client.BaseAddress = new Uri(UrlIntegracion);
 
                     // Consumimos Clientes
                     var resCli = await client.GetAsync("api/usuarios/clientes");
@@ -211,7 +210,7 @@ namespace CajaGomasPOS
             {
                 using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri(UrlCore);
+                    client.BaseAddress = new Uri(UrlIntegracion);
 
                     // 1. Traer los neumáticos del catálogo
                     var resGomas = await client.GetAsync($"api/productos/catalogo/{idSucursalActual}");
@@ -444,7 +443,7 @@ namespace CajaGomasPOS
                 {
                     using (var client = new HttpClient())
                     {
-                        client.BaseAddress = new Uri(UrlCore);
+                        client.BaseAddress = new Uri(UrlIntegracion);
                         var content = new StringContent(JsonConvert.SerializeObject(peticionVenta), Encoding.UTF8, "application/json");
 
                         var response = await client.PostAsync("api/facturacion/procesar", content);
@@ -493,7 +492,7 @@ namespace CajaGomasPOS
             {
                 using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri(UrlCore);
+                    client.BaseAddress = new Uri(UrlIntegracion);
                     var response = await client.GetAsync("api/facturacion/resumen-diario/1");
                     if (response.IsSuccessStatusCode)
                     {

@@ -197,7 +197,6 @@
     <Compile Include="Controllers\ServiciosController.cs" />
     <Compile Include="Controllers\SucursalesController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
-    <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Controllers\VehiculosController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,7 +12,8 @@ namespace WebGomas
     public partial class _Default : Page
     {
         
-        private string UrlCore = "https://localhost:44376/";
+        private string UrlIntegracion = ConfigurationManager.AppSettings["UrlIntegracion"];
+
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -31,7 +33,7 @@ namespace WebGomas
 
                 using (var client = new HttpClient())
                 {
-                    client.BaseAddress = new Uri(UrlCore);
+                    client.BaseAddress = new Uri(UrlIntegracion);
 
                     // Conexión silenciosa al Core para acceder a la base de datos
                     var response = await client.GetAsync("api/productos/catalogo/1");
