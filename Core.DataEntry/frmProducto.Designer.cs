@@ -49,14 +49,19 @@
             this.PrecioVenta.AutoSize = true;
             this.PrecioVenta.Location = new System.Drawing.Point(145, 247);
             this.PrecioVenta.Name = "PrecioVenta";
-            this.PrecioVenta.Size = new System.Drawing.Size(40, 13);
+            this.PrecioVenta.Size = new System.Drawing.Size(68, 13);
             this.PrecioVenta.TabIndex = 54;
-            this.PrecioVenta.Text = "Sueldo";
+            this.PrecioVenta.Text = "Precio Venta";
             // 
             // nudPrecioVenta
             // 
             this.nudPrecioVenta.DecimalPlaces = 2;
             this.nudPrecioVenta.Location = new System.Drawing.Point(148, 263);
+            this.nudPrecioVenta.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
             this.nudPrecioVenta.Name = "nudPrecioVenta";
             this.nudPrecioVenta.Size = new System.Drawing.Size(245, 20);
             this.nudPrecioVenta.TabIndex = 53;
@@ -118,6 +123,11 @@
             // 
             this.nudCosto.DecimalPlaces = 2;
             this.nudCosto.Location = new System.Drawing.Point(422, 263);
+            this.nudCosto.Maximum = new decimal(new int[] {
+            1000000,
+            0,
+            0,
+            0});
             this.nudCosto.Name = "nudCosto";
             this.nudCosto.Size = new System.Drawing.Size(245, 20);
             this.nudCosto.TabIndex = 57;
@@ -143,9 +153,9 @@
             this.Costo.AutoSize = true;
             this.Costo.Location = new System.Drawing.Point(419, 247);
             this.Costo.Name = "Costo";
-            this.Costo.Size = new System.Drawing.Size(40, 13);
+            this.Costo.Size = new System.Drawing.Size(34, 13);
             this.Costo.TabIndex = 60;
-            this.Costo.Text = "Sueldo";
+            this.Costo.Text = "Costo";
             // 
             // frmProducto
             // 

@@ -228,6 +228,11 @@
             // 
             this.nudSueldo.DecimalPlaces = 2;
             this.nudSueldo.Location = new System.Drawing.Point(148, 472);
+            this.nudSueldo.Maximum = new decimal(new int[] {
+            100000,
+            0,
+            0,
+            0});
             this.nudSueldo.Name = "nudSueldo";
             this.nudSueldo.Size = new System.Drawing.Size(245, 20);
             this.nudSueldo.TabIndex = 43;
