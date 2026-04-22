@@ -215,7 +215,10 @@
     <Compile Include="Models\Empleado.cs" />
     <Compile Include="Models\GomasContext.cs" />
     <Compile Include="Models\Producto.cs" />
+    <Compile Include="Models\Servicio.cs" />
+    <Compile Include="Models\Sucursal.cs" />
     <Compile Include="Models\Usuario.cs" />
+    <Compile Include="Models\Vehiculo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

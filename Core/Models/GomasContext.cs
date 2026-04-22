@@ -15,6 +15,9 @@ namespace Core.Models
         public DbSet<Cliente> Clientes { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<Producto> Productos { get; set; }
+        public DbSet<Sucursal> Sucursales { get; set; }
+        public DbSet<Servicio> Servicios { get; set; }
+        public DbSet<Vehiculo> Vehiculos { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
