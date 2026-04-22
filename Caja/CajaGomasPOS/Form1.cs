@@ -225,6 +225,8 @@ namespace CajaGomasPOS
         {
             try
             {
+                System.Net.ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
                 using (var client = new HttpClient())
                 {
                     client.BaseAddress = new Uri(UrlIntegracion);
@@ -852,9 +854,8 @@ namespace CajaGomasPOS
             gfx.DrawString("¡Gracias por su preferencia!", fontBold, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro); y += 20;
             gfx.DrawString("Conserve su recibo para garantía", fontNormal, Brushes.Black, new RectangleF(0, y, ancho, 20), formatoCentro);
         }
-        private void EjecutarSincronizacion()
+        private async void EjecutarSincronizacion()
         {
-            // 1. Verificamos si hay facturas guardadas en el JSON
             int pendientes = GestorOffline.ContarPendientes();
             if (pendientes == 0)
             {
@@ -864,45 +865,43 @@ namespace CajaGomasPOS
 
             var facturasOffline = GestorOffline.LeerFacturasLocales();
             int sincronizadas = 0;
+            int fallidas = 0;
 
-            // 🚨 TU CADENA DE CONEXIÓN REAL (Extraída de tu Config)
-            string conexionBD = @"Server=(localdb)\MSSQLLocalDB;Database=GomasDB;Trusted_Connection=True;";
-
-            using (System.Data.SqlClient.SqlConnection con = new System.Data.SqlClient.SqlConnection(conexionBD))
+            try
             {
-                try
+                using (var client = new HttpClient())
                 {
-                    con.Open(); // Abrimos la conexión al SQL
+                    client.BaseAddress = new Uri(UrlIntegracion);
 
-                    // 2. Recorremos cada factura guardada
                     foreach (dynamic factura in facturasOffline)
                     {
-                        decimal total = Convert.ToDecimal(factura.TotalGeneral);
-                        string metodo = factura.MetodoPago.ToString();
-                        DateTime fecha = Convert.ToDateTime(factura.Fecha);
-
-                        // Preparamos el Query para insertar en la tabla real
-                        string query = "INSERT INTO tblFactura (Fecha, Impuesto, EstadoFactura, MetodoPago, IdCliente, IdSucursal, Estado) " +
-                                       "VALUES (@fecha, 18, 'Pagada', @metodo, 1, 1, 1)";
-
-                        using (System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(query, con))
+                        try
                         {
-                            cmd.Parameters.AddWithValue("@fecha", fecha);
-                            cmd.Parameters.AddWithValue("@metodo", metodo);
-                            cmd.ExecuteNonQuery(); // ¡Guardado en la Base de Datos!
+                            var content = new StringContent(JsonConvert.SerializeObject(factura), Encoding.UTF8, "application/json");
+                            var response = await client.PostAsync("api/Facturacion/Procesar", content);
+
+                            if (response.IsSuccessStatusCode)
+                                sincronizadas++;
+                            else
+                                fallidas++;
                         }
-                        sincronizadas++;
+                        catch { fallidas++; }
                     }
-
-                    // 3. Si todo salió perfecto, borramos el JSON para no duplicar ventas
-                    GestorOffline.LimpiarFacturasSincronizadas();
-
-                    MessageBox.Show($"¡Sincronización Exitosa!\nSe subieron {sincronizadas} facturas a la Base de Datos GomasDB.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
+
+                if (fallidas == 0)
                 {
-                    MessageBox.Show("Error al sincronizar. Revisa si el servidor SQL está encendido.\nDetalle: " + ex.Message, "Error de Red", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    GestorOffline.LimpiarFacturasSincronizadas();
+                    MessageBox.Show($"¡Sincronización Exitosa!\nSe subieron {sincronizadas} facturas.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+                else
+                {
+                    MessageBox.Show($"Sincronizadas: {sincronizadas} | Fallidas: {fallidas}", "Resultado parcial", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al sincronizar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

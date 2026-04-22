@@ -72,7 +72,6 @@
             // 
             this.txtDescripcion.Location = new System.Drawing.Point(422, 140);
             this.txtDescripcion.Name = "txtDescripcion";
-            this.txtDescripcion.PasswordChar = '*';
             this.txtDescripcion.Size = new System.Drawing.Size(234, 20);
             this.txtDescripcion.TabIndex = 28;
             // 

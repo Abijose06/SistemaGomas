@@ -83,7 +83,6 @@
             // 
             this.txtModelo.Location = new System.Drawing.Point(422, 102);
             this.txtModelo.Name = "txtModelo";
-            this.txtModelo.PasswordChar = '*';
             this.txtModelo.Size = new System.Drawing.Size(234, 20);
             this.txtModelo.TabIndex = 48;
             // 
@@ -136,7 +135,6 @@
             // 
             this.txtMedida.Location = new System.Drawing.Point(148, 183);
             this.txtMedida.Name = "txtMedida";
-            this.txtMedida.PasswordChar = '*';
             this.txtMedida.Size = new System.Drawing.Size(234, 20);
             this.txtMedida.TabIndex = 58;
             // 

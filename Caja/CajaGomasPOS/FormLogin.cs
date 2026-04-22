@@ -29,7 +29,7 @@ namespace CajaGomasPOS
             // Preparamos los datos
             var peticionLogin = new
             {
-                Documento = txtUsuario.Text,
+                Correo = txtUsuario.Text,
                 Password = txtPassword.Text
             };
 

@@ -58,7 +58,6 @@
             // 
             this.txtPlaca.Location = new System.Drawing.Point(120, 227);
             this.txtPlaca.Name = "txtPlaca";
-            this.txtPlaca.PasswordChar = '*';
             this.txtPlaca.Size = new System.Drawing.Size(234, 20);
             this.txtPlaca.TabIndex = 68;
             // 
@@ -136,7 +135,6 @@
             // 
             this.txtModelo.Location = new System.Drawing.Point(394, 146);
             this.txtModelo.Name = "txtModelo";
-            this.txtModelo.PasswordChar = '*';
             this.txtModelo.Size = new System.Drawing.Size(234, 20);
             this.txtModelo.TabIndex = 61;
             // 
@@ -160,7 +158,6 @@
             // 
             this.txtChassis.Location = new System.Drawing.Point(394, 227);
             this.txtChassis.Name = "txtChassis";
-            this.txtChassis.PasswordChar = '*';
             this.txtChassis.Size = new System.Drawing.Size(234, 20);
             this.txtChassis.TabIndex = 70;
             // 

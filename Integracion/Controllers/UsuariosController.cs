@@ -52,5 +52,43 @@ namespace Integracion.Controllers
                 return StatusCode(response.StatusCode);
             }
         }
+
+        // GET api/Usuarios/Clientes
+        [HttpGet]
+        [Route("Clientes")]
+        public async Task<IHttpActionResult> GetClientes()
+        {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(urlCore + "usuarios/clientes");
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsAsync<object>();
+                    return Ok(data);
+                }
+                return StatusCode(response.StatusCode);
+            }
+        }
+
+        // GET api/Usuarios/Empleados
+        [HttpGet]
+        [Route("Empleados")]
+        public async Task<IHttpActionResult> GetEmpleados()
+        {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            using (HttpClient client = new HttpClient())
+            {
+                HttpResponseMessage response = await client.GetAsync(urlCore + "usuarios/empleados");
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsAsync<object>();
+                    return Ok(data);
+                }
+                return StatusCode(response.StatusCode);
+            }
+        }
     }
 }

@@ -70,7 +70,6 @@
             // 
             this.txtTelefono.Location = new System.Drawing.Point(428, 160);
             this.txtTelefono.Name = "txtTelefono";
-            this.txtTelefono.PasswordChar = '*';
             this.txtTelefono.Size = new System.Drawing.Size(234, 20);
             this.txtTelefono.TabIndex = 22;
             // 
