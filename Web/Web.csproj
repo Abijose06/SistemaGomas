@@ -124,11 +124,11 @@
     <Content Include="Historial.aspx" />
     <Content Include="images\GomaCinturatoP7.png" />
     <Content Include="images\GomaContiSportContact.png" />
-    <Content Include="images\GomaEagle F1 Asymmetric.png" />
+    <Content Include="images\GomaEagleF1Asymmetric.png" />
     <Content Include="images\GomaPilotSport4.png" />
-    <Content Include="images\GomaPotenza S007.png" />
+    <Content Include="images\GomaPotenzaS007.png" />
     <Content Include="images\GomaPrimacy4.png" />
-    <Content Include="images\GomaProxes Sport.png" />
+    <Content Include="images\GomaProxesSport.png" />
     <Content Include="images\GomaVentusS1Evo3.png" />
     <Content Include="Login.aspx" />
     <Content Include="Logout.aspx" />

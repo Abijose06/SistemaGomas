@@ -1,4 +1,6 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -16,6 +18,8 @@ namespace Integracion.Controllers
         [Route("CrearFactura")]
         public async Task<IHttpActionResult> CrearFactura([FromBody] object factura)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (HttpClient client = new HttpClient())
             {
                 // Aquí cambiamos GetAsync por PostAsJsonAsync porque estamos enviando datos
@@ -39,6 +43,8 @@ namespace Integracion.Controllers
         [Route("Historial/{idCliente}")]
         public async Task<IHttpActionResult> Historial(int idCliente)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (HttpClient client = new HttpClient())
             {
                 HttpResponseMessage response = await client.GetAsync(urlCore + $"facturacion/historial/{idCliente}");
@@ -57,6 +63,8 @@ namespace Integracion.Controllers
         [Route("Detalle/{idFactura}")]
         public async Task<IHttpActionResult> Detalle(int idFactura)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (HttpClient client = new HttpClient())
             {
                 HttpResponseMessage response = await client.GetAsync(urlCore + $"facturacion/detalle/{idFactura}");
@@ -75,10 +83,11 @@ namespace Integracion.Controllers
         [Route("Procesar")]
         public async Task<IHttpActionResult> Procesar([FromBody] object pedido)
         {
+            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             using (HttpClient client = new HttpClient())
             {
                 HttpResponseMessage response = await client.PostAsJsonAsync(urlCore + "facturacion/procesar", pedido);
-
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadAsAsync<object>();

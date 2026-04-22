@@ -536,7 +536,7 @@
     alt='<%# Eval("Nombre") %>'
     class="card-img" />
 
- </div>
+ </div> 
 
                             <!-- Cuerpo -->
                             <div class="card-body">
@@ -545,7 +545,7 @@
                                 <div class="card-precio">
                                     <%# string.Format("{0:C2}", Eval("Precio")) %>
                                 </div>
-                                <div class="card-precio-label">Precio por unidad · IVA incluido</div>
+                                <div class="card-precio-label">Precio por unidad · ITIBIS no incluido</div>
                             </div>
 
                             <!-- Botón Ver detalle -->

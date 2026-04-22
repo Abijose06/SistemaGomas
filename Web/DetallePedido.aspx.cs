@@ -52,13 +52,19 @@ namespace WebGomas
             lblId.Text = "#" + id;
             lblIdDetalle.Text = "#" + id;
 
-            // Calcular total
-            decimal total = 0;
+            // Calcular subtotal sin ITBIS
+            decimal subtotal = 0;
             foreach (var item in detalles)
-                total += item.SubTotal;
+                subtotal += item.SubTotal;
 
-            lblTotal.Text = total.ToString("C2");
-            lblTotalGeneral.Text = total.ToString("C2");
+            // Calcular ITBIS 18%
+            decimal itbis = Math.Round(subtotal * 0.18m, 2);
+            decimal totalConItbis = Math.Round(subtotal + itbis, 2);
+
+            lblTotal.Text = totalConItbis.ToString("C2");
+            lblTotalGeneral.Text = totalConItbis.ToString("C2");
+            lblSubtotalSinItbis.Text = subtotal.ToString("C2");
+            lblItbis.Text = itbis.ToString("C2");
 
             // Estado fijo — viene de la factura
             lblEstado.Text = "Pagada";

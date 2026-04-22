@@ -88,7 +88,7 @@ namespace Core.Controllers
                 {
                     transaccion.Rollback();
                     log.Error($"Fallo crítico y Rollback ejecutado al intentar procesar venta para el Cliente ID: {request.IdCliente}", ex);
-                    return InternalServerError(new Exception("Error crítico al procesar la venta. Se ha revertido la operación."));
+                    return InternalServerError(new Exception("Error crítico al procesar la venta. Se ha revertido la operación.")); 
                 }
             }
         }
@@ -148,7 +148,7 @@ namespace Core.Controllers
             catch (Exception ex)
             {
                 log.Error($"Error al consultar el historial de facturas del cliente {idCliente}", ex);
-                return InternalServerError(ex);
+                return InternalServerError(new Exception("No se pudo obtener el historial de facturas."));
             }
         }
         // Ruta: GET api/facturacion/detalle/{idFactura}

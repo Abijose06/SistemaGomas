@@ -36,7 +36,6 @@
             flex-direction: column;
         }
 
-        /* HEADER */
         .header {
             background: var(--blanco);
             border-bottom: 1px solid var(--gris-borde);
@@ -53,14 +52,11 @@
 
         .header-logo { font-size: 20px; font-weight: 800; color: var(--negro); text-decoration: none; flex-shrink: 0; }
         .header-logo span { color: var(--azul); }
-
         .header-nav { display: flex; align-items: center; gap: 4px; }
         .header-nav a { color: var(--gris-texto); text-decoration: none; font-size: 14px; font-weight: 500; padding: 6px 14px; border-radius: 8px; transition: color 0.2s, background 0.2s; }
         .header-nav a:hover  { color: var(--azul); background: var(--azul-claro); }
         .header-nav a.activo { color: var(--azul); font-weight: 700; background: var(--azul-claro); }
-
         .header-user { display: flex; align-items: center; flex-shrink: 0; }
-
         .user-card { display: flex; align-items: center; gap: 10px; background: var(--gris-suave); border: 1px solid var(--gris-borde); border-radius: 12px; padding: 6px 6px 6px 12px; }
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--azul); color: var(--blanco); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
         .user-datos { display: flex; flex-direction: column; line-height: 1.3; }
@@ -76,7 +72,6 @@
             .user-datos { display: none; }
         }
 
-        /* CONTENIDO */
         .pagina {
             flex: 1;
             max-width: 820px;
@@ -106,7 +101,6 @@
         .link-volver:hover { color: var(--azul); }
         .link-volver::before { content: '←'; font-size: 16px; }
 
-        /* CARD FACTURA */
         .card-factura {
             background: var(--blanco);
             border-radius: var(--radio);
@@ -139,7 +133,6 @@
 
         .card-cuerpo { padding: 28px 32px; }
 
-        /* RESUMEN DEL PEDIDO */
         .resumen-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -163,17 +156,9 @@
             margin-bottom: 6px;
         }
 
-        .resumen-item-valor {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--negro);
-        }
+        .resumen-item-valor { font-size: 16px; font-weight: 700; color: var(--negro); }
+        .resumen-item-valor.azul { color: var(--azul); font-size: 20px; }
 
-        .resumen-item-valor.azul   { color: var(--azul); font-size: 20px; }
-        .resumen-item-valor.verde  { color: var(--verde); }
-        .resumen-item-valor.naranja { color: var(--naranja); }
-
-        /* SECCIÓN TÍTULO */
         .seccion-titulo {
             font-size: 12px;
             font-weight: 700;
@@ -185,7 +170,6 @@
             border-bottom: 1px solid var(--gris-borde);
         }
 
-        /* TABLA DE PRODUCTOS */
         .tabla-productos {
             width: 100%;
             border-collapse: collapse;
@@ -221,15 +205,11 @@
             vertical-align: middle;
         }
 
-        .tabla-productos tbody tr td:last-child {
-            text-align: right;
-            font-weight: 700;
-        }
+        .tabla-productos tbody tr td:last-child { text-align: right; font-weight: 700; }
 
         .producto-nombre { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
         .producto-medida { font-size: 12px; color: var(--gris-texto); }
 
-        /* TOTAL */
         .seccion-total {
             background: var(--gris-suave);
             border-radius: 12px;
@@ -243,23 +223,12 @@
         .total-label { font-size: 14px; font-weight: 600; color: var(--gris-texto); }
         .total-valor { font-size: 28px; font-weight: 800; color: var(--azul); letter-spacing: -0.5px; }
 
-        /* BADGES */
-        .badge-estado {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
+        .badge-estado { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .estado-pagada     { background: var(--verde-claro); color: var(--verde);   border: 1px solid #a9dfbf; }
         .estado-completado { background: var(--verde-claro); color: var(--verde);   border: 1px solid #a9dfbf; }
         .estado-procesando { background: var(--azul-claro);  color: var(--azul);    border: 1px solid #b3d4ff; }
         .estado-pendiente  { background: #fef3e2;            color: var(--naranja); border: 1px solid #f8c471; }
 
-        /* BOTÓN VOLVER */
         .btn-volver {
             display: block;
             width: 100%;
@@ -277,7 +246,6 @@
 
         .btn-volver:hover { background: var(--azul-oscuro); transform: translateY(-2px); }
 
-        /* PANEL ERROR */
         .panel-error {
             background: #fff5f5;
             border: 1px solid #fed7d7;
@@ -288,7 +256,6 @@
             font-weight: 500;
         }
 
-        /* FOOTER */
         .page-footer {
             text-align: center;
             padding: 28px;
@@ -300,6 +267,7 @@
         @media (max-width: 600px) {
             .resumen-grid { grid-template-columns: 1fr; }
             .card-cuerpo  { padding: 20px; }
+            .card-cabecera { padding: 20px; }
         }
 
     </style>
@@ -307,7 +275,6 @@
 <body>
     <form id="form1" runat="server">
 
-        <!-- HEADER -->
         <header class="header">
             <a href="Productos.aspx" class="header-logo">Precision<span>Tire</span></a>
             <nav class="header-nav">
@@ -338,11 +305,9 @@
 
             <a href="Historial.aspx" class="link-volver">Volver al historial</a>
 
-            <!-- Panel: factura encontrada -->
             <asp:Panel ID="pnlDetalle" runat="server" Visible="false">
                 <div class="card-factura">
 
-                    <!-- Cabecera -->
                     <div class="card-cabecera">
                         <div>
                             <h2>Factura <asp:Label ID="lblId" runat="server" /></h2>
@@ -351,10 +316,8 @@
                         <div class="cabecera-icono">🧾</div>
                     </div>
 
-                    <!-- Cuerpo -->
                     <div class="card-cuerpo">
 
-                        <!-- Resumen rápido -->
                         <div class="resumen-grid">
                             <div class="resumen-item">
                                 <div class="resumen-item-label">Nº Factura</div>
@@ -376,7 +339,6 @@
                             </div>
                         </div>
 
-                        <!-- Productos de la factura -->
                         <div class="seccion-titulo">Productos comprados</div>
 
                         <asp:GridView
@@ -392,16 +354,26 @@
                                         <div class="producto-medida"><%# Eval("Medida") %></div>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:BoundField DataField="Cantidad"      HeaderText="Cant."        />
+                                <asp:BoundField DataField="Cantidad"       HeaderText="Cant."        />
                                 <asp:BoundField DataField="PrecioUnitario" HeaderText="Precio unit." DataFormatString="{0:C2}" />
-                                <asp:BoundField DataField="SubTotal"      HeaderText="Subtotal"     DataFormatString="{0:C2}" />
+                                <asp:BoundField DataField="SubTotal"       HeaderText="Subtotal"     DataFormatString="{0:C2}" />
                             </Columns>
                         </asp:GridView>
 
-                        <!-- Total general -->
-                        <div class="seccion-total">
-                            <span class="total-label">Total general · IVA incluido</span>
-                            <asp:Label ID="lblTotalGeneral" runat="server" CssClass="total-valor" />
+                        <!-- Desglose ITBIS -->
+                        <div class="seccion-total" style="flex-direction:column; align-items:stretch; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; font-size:14px; color:#6c757d; padding:6px 0;">
+                                <span>Subtotal sin ITBIS</span>
+                                <asp:Label ID="lblSubtotalSinItbis" runat="server" />
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; color:#6c757d; padding:6px 0; border-bottom:1px solid #e9ecef;">
+                                <span>ITBIS (18%)</span>
+                                <asp:Label ID="lblItbis" runat="server" />
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px;">
+                                <span class="total-label">Total general · ITBIS incluido</span>
+                                <asp:Label ID="lblTotalGeneral" runat="server" CssClass="total-valor" />
+                            </div>
                         </div>
 
                     </div>
@@ -410,7 +382,6 @@
                 <a href="Historial.aspx" class="btn-volver">← Volver al historial</a>
             </asp:Panel>
 
-            <!-- Panel: error -->
             <asp:Panel ID="pnlError" runat="server" Visible="false">
                 <div class="panel-error">
                     ⚠ Pedido no encontrado. El ID indicado no existe.

@@ -82,12 +82,12 @@ namespace WebGomas
             if (modelo == null) return "images/GomaPilotSport4.png";
 
             if (modelo.Contains("Pilot Sport")) return "images/GomaPilotSport4.png";
-            if (modelo.Contains("Eagle")) return "images/GomaEagle%20F1%20Asymmetric.png";
+            if (modelo.Contains("Eagle")) return "images/GomaEagleF1Asymmetric.png";
             if (modelo.Contains("Cinturato")) return "images/GomaCinturatoP7.png";
             if (modelo.Contains("Conti")) return "images/GomaContiSportContact.png";
-            if (modelo.Contains("Potenza")) return "images/GomaPotenza%20S007.png";
+            if (modelo.Contains("Potenza")) return "images/GomaPotenzaS007.png";
             if (modelo.Contains("Ventus")) return "images/GomaVentusS1Evo3.png";
-            if (modelo.Contains("Proxes")) return "images/GomaProxes%20Sport.png";
+            if (modelo.Contains("Proxes")) return "images/GomaProxesSport.png";
             if (modelo.Contains("Primacy")) return "images/GomaPrimacy4.png";
 
             return "images/GomaPilotSport4.png";

@@ -44,8 +44,13 @@ namespace WebGomas
             gvConfirmacion.DataSource = carrito;
             gvConfirmacion.DataBind();
 
-            decimal total = carrito.Sum(item => item.Subtotal);
-            lblTotal.Text = total.ToString("C2");
+            decimal subtotal = carrito.Sum(item => item.Subtotal);
+            decimal itbis = Math.Round(subtotal * 0.18m, 2);
+            decimal totalConItbis = Math.Round(subtotal + itbis, 2);
+
+            lblSubtotal.Text = subtotal.ToString("C2");
+            lblItbis.Text = itbis.ToString("C2");
+            lblTotal.Text = totalConItbis.ToString("C2");
             lblMensaje.Text = string.Empty;
 
             pnlMensajeExito.Visible = false;
@@ -62,12 +67,17 @@ namespace WebGomas
                 return;
             }
 
-            decimal total = carrito.Sum(item => item.Subtotal);
+            decimal subtotal = carrito.Sum(item => item.Subtotal);
+            decimal itbis = Math.Round(subtotal * 0.18m, 2);
+            decimal totalConItbis = Math.Round(subtotal + itbis, 2);
+
             bool guardado = EnviarPedidoACore(carrito);
 
             Session["carrito"] = null;
 
-            lblTotal.Text = total.ToString("C2");
+            lblSubtotal.Text = subtotal.ToString("C2");
+            lblItbis.Text = itbis.ToString("C2");
+            lblTotal.Text = totalConItbis.ToString("C2");
             lblMensaje.Text = guardado
                 ? "¡Compra realizada con éxito!"
                 : "¡Compra registrada! (modo offline)";
@@ -114,7 +124,7 @@ namespace WebGomas
 
                 using (var client = new HttpClient())
                 {
-                    var response = client.PostAsync(UrlIntegracion + "facturacion/procesar", content).Result;
+                    var response = client.PostAsync(UrlIntegracion + "Facturacion/Procesar", content).Result;
                     return response.IsSuccessStatusCode;
                 }
             }

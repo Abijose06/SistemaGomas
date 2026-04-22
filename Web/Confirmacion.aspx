@@ -726,17 +726,27 @@
 
                     </asp:GridView>
 
-                    <!-- Total -->
-                    <div class="seccion-total">
-                        <div class="total-etiqueta">
-                            Total a pagar
-                            <small>IVA incluido · Envío gratis</small>
-                        </div>
-                        <asp:Label
-                            ID="lblTotal"
-                            runat="server"
-                            CssClass="label-total" />
-                    </div>
+                    <!-- Total con desglose ITBIS -->
+<div class="seccion-total" style="flex-direction:column; align-items:stretch; gap:10px;">
+    <div style="display:flex; justify-content:space-between; font-size:14px; color:#6c757d; padding:4px 0;">
+        <span>Subtotal sin ITBIS</span>
+        <asp:Label ID="lblSubtotal" runat="server" />
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:14px; color:#6c757d; padding:4px 0; border-bottom:1px solid #e9ecef; padding-bottom:12px;">
+        <span>ITBIS (18%)</span>
+        <asp:Label ID="lblItbis" runat="server" />
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px;">
+        <div class="total-etiqueta">
+            Total a pagar
+            <small>ITBIS incluido · Envío gratis</small>
+        </div>
+        <asp:Label
+            ID="lblTotal"
+            runat="server"
+            CssClass="label-total" />
+    </div>
+</div> 
 
                     <!-- Botones principales -->
                     <div class="contenedor-boton">

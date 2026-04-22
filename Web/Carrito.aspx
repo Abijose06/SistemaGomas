@@ -954,7 +954,7 @@
                         <div class="resumen-total">
                             <div class="resumen-total-label">
                                 Total general
-                                <small>IVA incluido</small>
+                                <small>ITIBIS no incluido</small>
                             </div>
                             <asp:Label ID="lblTotal" runat="server"
                                        CssClass="label-total" />
